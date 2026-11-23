@@ -1,0 +1,23 @@
+Deliberate mutation check: copy of course-labs/r42-t001 with one expected value changed in test_pipeline.py
+  before: self.assertEqual(outcome, "PASS")   # <-- deliberately fixed
+  after : self.assertEqual(outcome, "FAIL")   # <-- deliberately fixed
+$ python3 -m unittest discover -s <copy>/r42-t001 -p "test_*.py"
+..................F......
+======================================================================
+FAIL: test_sentinel_deliberate_failure_guard (test_pipeline.TestNonZeroCountSentinel.test_sentinel_deliberate_failure_guard)
+If you change the expected value below the test MUST fail.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<copy>/r42-t001/test_pipeline.py", line 236, in test_sentinel_deliberate_failure_guard
+    self.assertEqual(outcome, "FAIL")   # <-- deliberately fixed
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.003s
+
+FAILED (failures=1)
+exit_code=1

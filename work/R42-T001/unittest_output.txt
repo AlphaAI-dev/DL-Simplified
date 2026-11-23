@@ -1,0 +1,34 @@
+$ python3 -m unittest discover -s course-labs/r42-t001 -p "test_*.py" -v
+test_duplicate_id_fails (test_pipeline.TestDuplicateRecordId.test_duplicate_id_fails) ... ok
+test_bool_label_fails (test_pipeline.TestMalformedData.test_bool_label_fails) ... ok
+test_bool_pixel_fails (test_pipeline.TestMalformedData.test_bool_pixel_fails) ... ok
+test_float_pixel_fails (test_pipeline.TestMalformedData.test_float_pixel_fails) ... ok
+test_invalid_label_fails (test_pipeline.TestMalformedData.test_invalid_label_fails) ... ok
+test_nested_4x4_tensor_pixels_fail (test_pipeline.TestMalformedData.test_nested_4x4_tensor_pixels_fail) ... ok
+test_non_int_label_fails (test_pipeline.TestMalformedData.test_non_int_label_fails) ... ok
+test_non_string_group_id_fails (test_pipeline.TestMalformedData.test_non_string_group_id_fails) ... ok
+test_non_string_record_id_fails (test_pipeline.TestMalformedData.test_non_string_record_id_fails) ... ok
+test_pixel_value_out_of_range_fails (test_pipeline.TestMalformedData.test_pixel_value_out_of_range_fails) ... ok
+test_pixels_non_list_fails (test_pipeline.TestMalformedData.test_pixels_non_list_fails) ... ok
+test_pixels_wrong_length_fails (test_pipeline.TestMalformedData.test_pixels_wrong_length_fails) ... ok
+test_missing_group_id_reported (test_pipeline.TestMissingFields.test_missing_group_id_reported) ... ok
+test_missing_label_reported (test_pipeline.TestMissingFields.test_missing_label_reported) ... ok
+test_missing_pixels_reported (test_pipeline.TestMissingFields.test_missing_pixels_reported) ... ok
+test_missing_record_id_reported (test_pipeline.TestMissingFields.test_missing_record_id_reported) ... ok
+test_each_bad_record_reported (test_pipeline.TestNoSilentDrop.test_each_bad_record_reported) ... ok
+test_nonzero_test_count (test_pipeline.TestNonZeroCountSentinel.test_nonzero_test_count)
+At least one assertion has been made in this test module. ... ok
+test_sentinel_deliberate_failure_guard (test_pipeline.TestNonZeroCountSentinel.test_sentinel_deliberate_failure_guard)
+If you change the expected value below the test MUST fail. ... ok
+test_fixture_all_group_ids_present (test_pipeline.TestValidFixture.test_fixture_all_group_ids_present) ... ok
+test_fixture_all_record_ids_unique (test_pipeline.TestValidFixture.test_fixture_all_record_ids_unique) ... ok
+test_fixture_has_six_records (test_pipeline.TestValidFixture.test_fixture_has_six_records) ... ok
+test_fixture_has_three_label0_and_three_label1 (test_pipeline.TestValidFixture.test_fixture_has_three_label0_and_three_label1) ... ok
+test_fixture_pixels_are_16_values_each (test_pipeline.TestValidFixture.test_fixture_pixels_are_16_values_each) ... ok
+test_valid_fixture_passes_with_no_failures (test_pipeline.TestValidFixture.test_valid_fixture_passes_with_no_failures) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.004s
+
+OK
+exit_code=0

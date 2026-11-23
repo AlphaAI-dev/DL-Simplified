@@ -71,6 +71,8 @@ class TestMissingFields(unittest.TestCase):
         failures = validate_record(rec, set())
         fields = [f.field for f in failures]
         self.assertIn("record_id", fields)
+        reason = [f.reason for f in failures if f.field == "record_id"][0]
+        self.assertEqual(reason, "missing or null record_id")
 
     def test_missing_group_id_reported(self):
         rec = self._one_record(group_id=None)
@@ -141,6 +143,55 @@ class TestMalformedData(unittest.TestCase):
         failures = validate_record(rec, set())
         fields = [f.field for f in failures]
         self.assertIn("label", fields)
+
+    def test_bool_label_fails(self):
+        # bool is a subclass of int in Python; it must still be rejected
+        rec = self._record(label=True)
+        failures = validate_record(rec, set())
+        self.assertEqual(
+            [(f.field, f.reason) for f in failures],
+            [("label", "label must be int, got 'bool'")],
+        )
+
+    def test_float_pixel_fails(self):
+        bad_pixels = [0] * NUM_PIXELS
+        bad_pixels[3] = 0.5
+        rec = self._record(pixels=bad_pixels)
+        failures = validate_record(rec, set())
+        self.assertEqual(
+            [(f.field, f.reason) for f in failures],
+            [("pixels[3]", "pixel value must be int, got 'float'")],
+        )
+
+    def test_bool_pixel_fails(self):
+        bad_pixels = [0] * NUM_PIXELS
+        bad_pixels[0] = True
+        rec = self._record(pixels=bad_pixels)
+        failures = validate_record(rec, set())
+        self.assertEqual([f.field for f in failures], ["pixels[0]"])
+
+    def test_nested_4x4_tensor_pixels_fail(self):
+        # pixels must be a flat list of 16 values, not a nested 4x4 tensor
+        rec = self._record(pixels=[[0] * 4 for _ in range(4)])
+        failures = validate_record(rec, set())
+        self.assertEqual(
+            [(f.field, f.reason) for f in failures],
+            [("pixels", "pixels length must be 16 (4×4), got 4")],
+        )
+
+
+class TestNoSilentDrop(unittest.TestCase):
+    """Every bad record is reported by record ID; none is silently dropped."""
+
+    def test_each_bad_record_reported(self):
+        fixture = make_fixture()
+        fixture[1]["label"] = 7
+        fixture[4]["pixels"] = [0] * 3
+        failures = validate_dataset(fixture)
+        self.assertEqual(
+            [(f.record_id, f.field) for f in failures],
+            [("r002", "label"), ("r005", "pixels")],
+        )
 
 
 class TestDuplicateRecordId(unittest.TestCase):

@@ -12,8 +12,9 @@ from __future__ import annotations
 
 import json
 import pathlib
-import numpy as np
-from dataclasses import dataclass, field
+import platform
+import sys
+from dataclasses import dataclass
 from typing import Any, List, Optional
 
 # ---------------------------------------------------------------------------
@@ -23,7 +24,10 @@ IMAGE_ROWS = 4
 IMAGE_COLS = 4
 NUM_PIXELS = IMAGE_ROWS * IMAGE_COLS          # 16
 VALID_LABELS = {0, 1}
-PIXEL_DTYPE = int                             # integer 0-255
+PIXEL_DTYPE = int                             # integer 0-255 (bool is rejected)
+
+REPO_ROOT = pathlib.Path(__file__).resolve().parents[2]
+EVIDENCE_DIR = REPO_ROOT / "work" / "R42-T001"
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +119,7 @@ def validate_record(record: Any, seen_ids: set) -> List[ValidationFailure]:
         ))
     else:
         for i, px in enumerate(pixels):
-            if not isinstance(px, int):
+            if isinstance(px, bool) or not isinstance(px, int):
                 failures.append(ValidationFailure(
                     record_id=rid, field=f"pixels[{i}]",
                     reason=f"pixel value must be int, got {type(px).__name__!r}"
@@ -135,7 +139,7 @@ def validate_record(record: Any, seen_ids: set) -> List[ValidationFailure]:
             record_id=rid, field="label",
             reason="missing or null label"
         ))
-    elif not isinstance(label, int):
+    elif isinstance(label, bool) or not isinstance(label, int):
         failures.append(ValidationFailure(
             record_id=rid, field="label",
             reason=f"label must be int, got {type(label).__name__!r}"
@@ -162,15 +166,16 @@ def validate_dataset(records: List[Any]) -> List[ValidationFailure]:
 # Entry point (evidence generation)
 # ---------------------------------------------------------------------------
 
-def run_and_save(output_dir: str = "work/R42-T001") -> None:
+def run_and_save(output_dir: Optional[str] = None) -> None:
     """
     Run validation on the canonical fixture, print results, and persist
-    evidence (inputs + expected vs actual) to *output_dir* (repo root level).
+    evidence (inputs + expected vs actual) to *output_dir*
+    (default: <repo root>/work/R42-T001, independent of the current directory).
 
     NOTE: Results labelled as pipeline verification, not evidence of
     real-world Fashion-MNIST performance.
     """
-    out = pathlib.Path(output_dir)
+    out = pathlib.Path(output_dir) if output_dir else EVIDENCE_DIR
     out.mkdir(parents=True, exist_ok=True)
 
     fixture = make_fixture()
@@ -189,22 +194,27 @@ def run_and_save(output_dir: str = "work/R42-T001") -> None:
             "Synthetic 4×4 fixture — NOT Fashion-MNIST real dataset."
         ),
         "records_validated": len(fixture),
-        "failures": [
-            {"record_id": f.record_id, "field": f.field, "reason": f.reason}
-            for f in failures
-        ],
-        "outcome": "PASS" if not failures else "FAIL",
+        "expected": {"outcome": "PASS", "failures": []},
+        "actual": {
+            "outcome": "PASS" if not failures else "FAIL",
+            "failures": [
+                {"record_id": f.record_id, "field": f.field, "reason": f.reason}
+                for f in failures
+            ],
+        },
     }
+    result["outcome"] = (
+        "PASS" if result["expected"] == result["actual"] else "FAIL"
+    )
 
     (out / "validation_result.json").write_text(
         json.dumps(result, indent=2), encoding="utf-8"
     )
 
-    import sys, platform
     versions = {
         "python": sys.version,
-        "numpy": np.__version__,
         "platform": platform.platform(),
+        "third_party_packages": "none (standard library only)",
     }
     (out / "tool_versions.json").write_text(
         json.dumps(versions, indent=2), encoding="utf-8"

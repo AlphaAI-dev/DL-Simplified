@@ -22,10 +22,11 @@ Implement a schema validator for image input records with fields:
 |-------|------|-----------|
 | `record_id` | `str` | non-empty, unique |
 | `group_id` | `str` | non-empty |
-| `pixels` | `list[int]` | length == 16 (4×4), values in \[0, 255\] |
-| `label` | `int` | in `{0, 1}` |
+| `pixels` | `list[int]` | flat list, length == 16 (4×4, row-major), each value an `int` in \[0, 255\] (`bool`/`float` rejected) |
+| `label` | `int` | in `{0, 1}` (`bool` rejected) |
 
-Failures are **always reported** (record ID + field + reason) — records are never silently dropped.
+Failures are **always reported** as `ValidationFailure(record_id, field, reason)` — records are never silently dropped.
+For example, a duplicate ID yields `record_id='r001', field='record_id', reason="duplicate record_id 'r001'"`.
 
 ---
 
@@ -46,13 +47,16 @@ Failures are **always reported** (record ID + field + reason) — records are ne
 
 ```
 course-labs/r42-t001/
+├── fixture.json       ← literal synthetic fixture (simulated data)
 ├── pipeline.py        ← schema validator
 ├── test_pipeline.py   ← unit tests
 └── README.md          ← this file
-work/R42-T001/
-├── fixture_input.json
-├── validation_result.json
-└── tool_versions.json
+work/R42-T001/          ← coursework evidence only (remove from any later upstream branch)
+├── fixture_input.json      ← input
+├── validation_result.json  ← expected vs actual result
+├── tool_versions.json      ← Python / platform
+├── unittest_output.txt     ← verbose test run (25 tests, exit_code=0)
+└── mutation_check.txt      ← one expected value deliberately changed → FAILED, exit_code=1
 ```
 
 ---
@@ -64,15 +68,32 @@ work/R42-T001/
 python3 -m venv .venv
 source .venv/bin/activate
 
-# 2. Install dependencies
-pip install numpy
+# 2. No dependencies to install (standard library only)
 
-# 3. Run the validator (generates work/R42-T001/ evidence)
+# 3. Run the validator (writes work/R42-T001/ evidence at the repo root)
 python3 course-labs/r42-t001/pipeline.py
 
-# 4. Run the automated checks
-python3 -m unittest discover -s course-labs/r42-t001 -p "test_*.py" -v
+# 4. Run the automated check (exits non-zero if any assertion fails)
+python3 -m unittest discover -s course-labs/r42-t001 -p "test_*.py"
 ```
+
+---
+
+## Result
+
+- Clean fixture: 6 records validated, 0 failures (`expected == actual`, see `work/R42-T001/validation_result.json`).
+- Automated check: 25 tests, all pass, offline and CPU-only, < 1 s.
+- Deliberately changing one expected value makes the check fail with exit code 1 (`work/R42-T001/mutation_check.txt`).
+
+These are **pipeline-verification results on simulated data**, not evidence of real-world performance on Fashion-MNIST.
+
+## Limits
+
+- Only validates the schema above; it does not load images, train a CNN, or split data. Because nothing is trained, there is no
+  train/validation/test data in this component — the tests use the fixture directly.
+- The fixture is deterministic (no random generation), so no seed is needed.
+- Within a record, the first bad pixel is reported (with its index); other fields of the same record are still checked.
+- No real-data extension is included. One would need to record its source, licence, access requirements and split design separately.
 
 ---
 
@@ -91,5 +112,5 @@ python3 -m unittest discover -s course-labs/r42-t001 -p "test_*.py" -v
 
 | Package | Version used |
 |---------|-------------|
-| Python  | 3.x (stdlib) |
-| NumPy   | ≥ 1.21 (fixture generation only) |
+| Python  | 3.13.18 (standard library only; also ran on 3.9.6) |
+| Third-party packages | none |
